@@ -270,7 +270,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 msg_type = msg_data.get("type")
 
                 # --- ОБЫЧНОЕ СООБЩЕНИЕ ---
-                if msg_type == "text":
+                if msg_type == "message" or msg_type == "text":
                     content = (msg_data.get("content") or "").strip()
                     file_path = msg_data.get("file_path")
                     file_type = msg_data.get("file_type")
@@ -412,22 +412,36 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                             "reactions": []
                         })
 
-                # --- СТАТУС "ПЕЧАТАЕТ" ---
+                # --- ПЕЧАТЬ ---
                 elif msg_type == "typing":
                     is_typing = msg_data.get("is_typing", False)
-                    await manager.broadcast({
-                        "type": "typing",
-                        "username": user.username,
-                        "is_typing": is_typing
-                    }, sender_id=user.id)
+                    if is_typing:
+                        await manager.broadcast_to_all({
+                            "type": "typing",
+                            "username": user.username,
+                            "is_typing": True
+                        })
 
-            except json.JSONDecodeError:
-                continue  # Игнорируем битые JSON-пакеты
+            except WebSocketDisconnect:
+                break
             except Exception as e:
-                db.rollback()  # Откатываем транзакцию при ошибке
-                print(f"WebSocket Message Error: {e}")
+                # Логируем ошибку но не рвем соединение
                 traceback.print_exc()
                 continue
+
+        # 5. Отключение
+    finally:
+        db.close()
+        user.is_online = False
+        db_local = SessionLocal()
+        db_local.query(User).filter(User.id == user.id).update({"is_online": False})
+        db_local.commit()
+        db_local.close()
+        manager.disconnect(user.id)
+        await manager.broadcast_to_all({
+            "type": "online_users",
+            "users": manager.get_online_users_list()
+        })
 
     except WebSocketDisconnect:
         manager.disconnect(websocket, user.id)
