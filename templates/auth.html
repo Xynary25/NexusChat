@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusChat - Вход</title>
+    <style>
+        /* ==================== THEME VARIABLES ==================== */
+        :root {
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --text-secondary: #666666;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --border: #e5e7eb;
+            --error: #ef4444;
+            --success: #22c55e;
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --card-bg: #2d2d44;
+            --text: #f0f0f0;
+            --text-secondary: #aaaaaa;
+            --primary: #818cf8;
+            --primary-hover: #6366f1;
+            --border: #404060;
+            --error: #f87171;
+            --success: #4ade80;
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ==================== BASE STYLES ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .auth-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-header h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* ==================== FORM ELEMENTS ==================== */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .toggle-text {
+            text-align: center;
+            margin-top: 1.25rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .toggle-text a {
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .toggle-text a:hover {
+            text-decoration: underline;
+        }
+
+        .message {
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .message.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        /* ==================== UI CONTROLS ==================== */
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--border);
+        }
+
+        .form-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="auth-container">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">🌓</button>
+    <div class="auth-header">
+        <h1>💬 NexusChat</h1>
+        <p>Современный чат на WebSockets</p>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm" class="form-section active">
+        <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="loginUsername">Имя пользователя</label>
+                <input type="text" id="loginUsername" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Пароль</label>
+                <input type="password" id="loginPassword" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn" id="loginBtn">Войти</button>
+        </form>
+        <div class="toggle-text">Нет аккаунта? <a onclick="toggleMode()">Зарегистрироваться</a></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerForm" class="form-section">
+        <form onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label for="regUsername">Имя пользователя</label>
+                <input type="text" id="regUsername" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="regEmail">Email</label>
+                <input type="email" id="regEmail" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Пароль</label>
+                <input type="password" id="regPassword" required minlength="6" autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn" id="regBtn">Зарегистрироваться</button>
+        </form>
+        <div class="toggle-text">Уже есть аккаунт? <a onclick="toggleMode()">Войти</a></div>
+    </div>
+</div>
+
+<script>
+    // === THEME MANAGEMENT ===
+    function toggleTheme() {
+        const body = document.body;
+        const current = body.getAttribute('data-theme');
+        body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        localStorage.setItem('theme', body.getAttribute('data-theme'));
+    }
+
+    // Load saved theme on start
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+    }
+
+    // === FORM TOGGLE ===
+    function toggleMode() {
+        document.getElementById('loginForm').classList.toggle('active');
+        document.getElementById('registerForm').classList.toggle('active');
+        document.getElementById('message').style.display = 'none';
+    }
+
+    // === NOTIFICATIONS ===
+    function showMessage(text, type) {
+        const msg = document.getElementById('message');
+        msg.textContent = text;
+        msg.className = `message ${type}`;
+        msg.style.display = 'block';
+    }
+
+    // === LOGIN HANDLER ===
+    async function handleLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true;
+        btn.textContent = 'Вход...';
+
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+            const data = await res.json();
+            if (res.ok) {
+                localStorage.setItem('token', data.access_token);
+                window.location.href = `/chat?token=${data.access_token}`;
+            } else {
+                showMessage(data.detail || 'Ошибка входа', 'error');
+            }
+        } catch (err) {
+            showMessage('Ошибка соединения с сервером', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Войти';
+        }
+    }
+
+    // === REGISTER HANDLER ===
+    async function handleRegister(e) {
+        e.preventDefault();
+        const btn = document.getElementById('regBtn');
+        btn.disabled = true;
+        btn.textContent = 'Регистрация...';
+
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+
+        try {
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, email, password})
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showMessage('✅ Регистрация успешна! Теперь войдите.', 'success');
+                setTimeout(() => toggleMode(), 1500);
+            } else {
+                showMessage(data.detail || 'Ошибка регистрации', 'error');
+            }
+        } catch (err) {
+            showMessage('Ошибка соединения с сервером', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Зарегистрироваться';
+        }
+    }
+</script>
+</body>
+</html>
